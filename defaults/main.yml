@@ -29,10 +29,10 @@ minecraft_uid: ""
 minecraft_gid: ""
 
 minecraft_container_image: "{{ minecraft_container_image_registry_prefix }}itzg/minecraft-server:{{ minecraft_container_image_tag }}"
+minecraft_container_image_tag: "{{ minecraft_docker_version }}"
 minecraft_container_image_registry_prefix: "{{ minecraft_container_image_registry_prefix_upstream }}"
 minecraft_container_image_registry_prefix_upstream: "{{ minecraft_container_image_registry_prefix_upstream_default }}"
 minecraft_container_image_registry_prefix_upstream_default: docker.io/
-minecraft_container_image_tag: "{{ minecraft_docker_version }}"
 
 # The base container network. It will be auto-created by this role if it doesn't exist already.
 minecraft_container_network: "{{ minecraft_identifier }}"
