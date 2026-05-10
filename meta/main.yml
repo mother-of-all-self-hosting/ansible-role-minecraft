@@ -1,9 +1,9 @@
 ---
 galaxy_info:
   author: XHawk87
-  company: xhawk87
+  company: mash
   role_name: minecraft
-  namespace: xhawk87
+  namespace: mash
   description: Minecraft
   platforms:
     - name: Debian
