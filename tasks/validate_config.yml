@@ -25,7 +25,7 @@
     - { "old": "minecraft_environment_variables_additional", "new": "<Removed>" }
     - { "old": "minecraft_container_image_force_pull", "new": "<removed> (the new community.docker.docker_image_pull module handles this natively)" }
 
-- name: Fail if required Minecraft settings not defined
+- name: Fail if required Minecraft Server settings not defined
   ansible.builtin.fail:
     msg: >-
       You need to define a required configuration setting (`{{ item }}`).
@@ -36,7 +36,7 @@
     - minecraft_gid
     - minecraft_container_network
 
-- name: Validate Minecraft security settings
+- name: Validate Minecraft Server security settings
   ansible.builtin.assert:
     that:
       - minecraft_security_mode == 'insecure' or

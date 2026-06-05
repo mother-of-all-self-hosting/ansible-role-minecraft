@@ -4,7 +4,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Ensure Minecraft paths exist
+- name: Ensure Minecraft Server paths exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -15,7 +15,7 @@
     - "{{ minecraft_base_path }}"
     - "{{ minecraft_data_path }}"
 
-- name: Ensure Minecraft support files installed
+- name: Ensure Minecraft Server support files installed
   ansible.builtin.template:
     src: "{{ role_path }}/templates/{{ item }}.j2"
     dest: "{{ minecraft_base_path }}/{{ item }}"
@@ -27,7 +27,7 @@
     - labels
   register: minecraft_support_files_result
 
-- name: Ensure Minecraft container image is pulled via community.docker.docker_image_pull
+- name: Ensure Minecraft Server container image is pulled via community.docker.docker_image_pull
   when: devture_systemd_docker_base_container_image_pull_method == 'ansible-module'
   community.docker.docker_image_pull:
     name: "{{ minecraft_container_image }}"
@@ -37,7 +37,7 @@
   delay: "{{ devture_playbook_help_container_retries_delay }}"
   until: minecraft_container_image_pull_result_ansible_module is not failed
 
-- name: Ensure Minecraft container image is pulled via ansible.builtin.command
+- name: Ensure Minecraft Server container image is pulled via ansible.builtin.command
   when: devture_systemd_docker_base_container_image_pull_method == 'command'
   ansible.builtin.command:
     cmd: "{{ devture_systemd_docker_base_host_command_docker }} pull {{ minecraft_container_image }}"
@@ -47,7 +47,7 @@
   until: minecraft_container_image_pull_result_command is not failed
   changed_when: "'Downloaded newer image' in minecraft_container_image_pull_result_command.stdout"
 
-- name: Ensure Minecraft container network is created via community.docker.docker_network
+- name: Ensure Minecraft Server container network is created via community.docker.docker_network
   when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
   community.docker.docker_network:
     enable_ipv6: "{{ devture_systemd_docker_base_ipv6_enabled }}"
@@ -56,7 +56,7 @@
     driver_options: "{{ devture_systemd_docker_base_container_networks_driver_options }}"
   register: minecraft_network_creation_result
 
-- name: Ensure Minecraft container network is created via ansible.builtin.command
+- name: Ensure Minecraft Server container network is created via ansible.builtin.command
   when: devture_systemd_docker_base_container_network_creation_method == 'command'
   ansible.builtin.command:
     cmd: >-
@@ -68,14 +68,14 @@
   changed_when: minecraft_network_creation_result.rc == 0
   failed_when: minecraft_network_creation_result.rc != 0 and 'already exists' not in minecraft_network_creation_result.stderr
 
-- name: Ensure Minecraft systemd service is present
+- name: Ensure Minecraft Server systemd service is present
   ansible.builtin.template:
     src: "{{ role_path }}/templates/systemd/minecraft.service.j2"
     dest: "{{ devture_systemd_docker_base_systemd_path }}/{{ minecraft_identifier }}.service"
     mode: "0644"
   register: minecraft_systemd_service_result
 
-- name: Determine whether Minecraft needs a restart
+- name: Determine whether Minecraft Server needs a restart
   ansible.builtin.set_fact:
     minecraft_restart_necessary: >-
       {{

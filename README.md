@@ -6,9 +6,9 @@ SPDX-FileCopyrightText: 2025, 2026 Suguru Hirahara
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Minecraft Ansible role
+# Minecraft Server Ansible role
 
-This is an [Ansible](https://www.ansible.com/) role which installs [Minecraft](https://docker-minecraft-server.readthedocs.io/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [Minecraft Server (Java Edition)](https://docker-minecraft-server.readthedocs.io/) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 This role *implicitly* depends on:
 

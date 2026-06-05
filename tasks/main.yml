@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Perform Minecraft installation tasks
+- name: Perform Minecraft Server installation tasks
   when: minecraft_enabled | bool
   tags:
     - setup-all
@@ -13,16 +13,16 @@
     - install-all
     - install-minecraft
   block:
-    - name: Validate Minecraft configuration
+    - name: Validate Minecraft Server configuration
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/validate_config.yml"
-    - name: Install Minecraft
+    - name: Install Minecraft Server
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/install.yml"
 
-- name: Perform Minecraft uninstallation tasks
+- name: Perform Minecraft Server uninstallation tasks
   when: not minecraft_enabled | bool
   tags:
     - setup-all
     - setup-minecraft
   block:
-    - name: Uninstall Minecraft
+    - name: Uninstall Minecraft Server
       ansible.builtin.include_tasks: "{{ role_path }}/tasks/uninstall.yml"

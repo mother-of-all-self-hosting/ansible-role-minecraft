@@ -19,7 +19,7 @@ minecraft_base_path: "/var/minecraft/{{ minecraft_identifier }}"
 minecraft_data_path: "{{ minecraft_base_path }}/data"
 
 # This is the version of the itzg/minecraft-server image, NOT the Minecraft
-# server version. To set the Minecraft server version, you must set the VERSION
+# server version. To set the Minecraft Server version, you must set the VERSION
 # environment variable in `minecraft_environment_variables_additional_variables_custom`.
 #
 # renovate: datasource=docker depName=itzg/docker-minecraft-server versioning=semver
@@ -91,13 +91,13 @@ minecraft_container_extra_arguments: "{{ minecraft_container_extra_arguments_aut
 minecraft_container_extra_arguments_auto: []
 minecraft_container_extra_arguments_custom: []
 
-# List of systemd services that the Minecraft systemd service depends on
+# List of systemd services that the Minecraft Server systemd service depends on
 minecraft_systemd_required_services_list: "{{ minecraft_systemd_required_services_list_default + minecraft_systemd_required_services_list_auto + minecraft_systemd_required_services_list_custom }}"
 minecraft_systemd_required_services_list_default: "{{ [devture_systemd_docker_base_docker_service_name] if devture_systemd_docker_base_docker_service_name else [] }}"
 minecraft_systemd_required_services_list_auto: []
 minecraft_systemd_required_services_list_custom: []
 
-# List of systemd services that the Minecraft systemd service wants
+# List of systemd services that the Minecraft Server systemd service wants
 minecraft_systemd_wanted_services_list: "{{ minecraft_systemd_wanted_services_list_default + minecraft_systemd_wanted_services_list_auto + minecraft_systemd_wanted_services_list_custom }}"
 minecraft_systemd_wanted_services_list_default: []
 minecraft_systemd_wanted_services_list_auto: []
@@ -143,7 +143,7 @@ minecraft_container_cleanup_command: |
 # This will need to be set to `insecure` in order to use less secure settings.
 minecraft_security_mode: secure
 
-# This grants the Minecraft server all capabilities and allows it to as much
+# This grants the Minecraft Server all capabilities and allows it to as much
 # access to the host as if it were run outside of a container. This could be
 # exploited by a malicious mod or plugin to make changes to your server, and
 # potentially gain control over it.
@@ -193,7 +193,7 @@ minecraft_environment_variables_eula: "TRUE"
 # See: https://docker-minecraft-server.readthedocs.io/en/latest/variables/
 minecraft_environment_variables_additional_variables: ""
 
-# minecraft_restart_necessary controls whether the Minecraft systemd
+# minecraft_restart_necessary controls whether the Minecraft Server systemd
 # service will be restarted (when true) or merely started (when false) by the
 # systemd service manager role (when conditional restart is enabled).
 #

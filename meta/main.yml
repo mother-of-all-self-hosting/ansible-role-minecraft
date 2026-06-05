@@ -4,7 +4,7 @@ galaxy_info:
   company: mash
   role_name: minecraft
   namespace: mash
-  description: Minecraft
+  description: Minecraft Server on Docker
   platforms:
     - name: Debian
       versions:

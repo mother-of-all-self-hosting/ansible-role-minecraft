@@ -4,37 +4,37 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Check existence of Minecraft systemd service
+- name: Check existence of Minecraft Server systemd service
   ansible.builtin.stat:
     path: "{{ devture_systemd_docker_base_systemd_path }}/{{ minecraft_identifier }}.service"
   register: minecraft_service_stat
 
-- name: Uninstall Minecraft systemd services and files
+- name: Uninstall Minecraft Server systemd services and files
   when: minecraft_service_stat.stat.exists | bool
   block:
-    - name: Ensure Minecraft systemd service is stopped
+    - name: Ensure Minecraft Server systemd service is stopped
       ansible.builtin.service:
         name: "{{ minecraft_identifier }}"
         state: stopped
         enabled: false
         daemon_reload: true
 
-    - name: Ensure Minecraft systemd service does not exist
+    - name: Ensure Minecraft Server systemd service does not exist
       ansible.builtin.file:
         path: "{{ devture_systemd_docker_base_systemd_path }}/{{ minecraft_identifier }}.service"
         state: absent
 
-    - name: Ensure Minecraft container network does not exist
+    - name: Ensure Minecraft Server container network does not exist
       when: minecraft_container_network_deletion_enabled
       block:
-        - name: Ensure Minecraft container network does not exist via community.docker.docker_network
+        - name: Ensure Minecraft Server container network does not exist via community.docker.docker_network
           when: devture_systemd_docker_base_container_network_creation_method == 'ansible-module'
           community.docker.docker_network:
             name: "{{ minecraft_container_network }}"
             state: absent
           register: minecraft_network_deletion_result
 
-        - name: Ensure Minecraft container network does not exist via ansible.builtin.command
+        - name: Ensure Minecraft Server container network does not exist via ansible.builtin.command
           when: devture_systemd_docker_base_container_network_creation_method == 'command'
           ansible.builtin.command:
             cmd: >-
@@ -43,7 +43,7 @@
           register: minecraft_network_deletion_result
           changed_when: minecraft_container_network in minecraft_network_deletion_result.stdout
 
-    - name: Ensure Minecraft path does not exist
+    - name: Ensure Minecraft Server path does not exist
       ansible.builtin.file:
         path: "{{ minecraft_base_path }}"
         state: absent
