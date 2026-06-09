@@ -22,8 +22,8 @@ minecraft_data_path: "{{ minecraft_base_path }}/data"
 # server version. To set the Minecraft Server version, you must set the VERSION
 # environment variable in `minecraft_environment_variables_additional_variables_custom`.
 #
-# renovate: datasource=docker depName=itzg/docker-minecraft-server versioning=semver
-minecraft_docker_version: 2025.4.2
+# renovate: datasource=docker depName=itzg/docker-minecraft-server
+minecraft_docker_version: 2026.6.0-java16
 
 minecraft_uid: ""
 minecraft_gid: ""
