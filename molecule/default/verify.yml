@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
+#
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+---
+- name: Verify Minecraft systemd service
+  hosts: all
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Wait for Minecraft service to become active (up to 180s)
+      ansible.builtin.systemd:
+        name: minecraft.service
+      register: minecraft_service
+      until: minecraft_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+
+    - name: Assert Minecraft service is active
+      ansible.builtin.assert:
+        that: minecraft_service.status.ActiveState == 'active'
+        fail_msg: "minecraft.service not active ({{ minecraft_service.status.ActiveState }})"
+        success_msg: "minecraft.service is active"
+
+    - name: Retrieve Minecraft service log for debugging
+      when: minecraft_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu minecraft.service
+      changed_when: false
+
+    - name: Show Minecraft systemd service status summary
+      ansible.builtin.debug:
+        msg:
+          - "Minecraft systemd: {{ minecraft_service.status.ActiveState }}"
