@@ -47,7 +47,6 @@ ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
     {% endfor %}
     --env-file={{ minecraft_base_path }}/env \
     --label-file={{ minecraft_base_path }}/labels \
-    --health-interval={{ minecraft_container_health_interval }} \
     -v {{ minecraft_data_path }}:/data \
     {% for volume in minecraft_container_additional_volumes %}
     --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
