@@ -23,7 +23,7 @@ minecraft_data_path: "{{ minecraft_base_path }}/data"
 # environment variable in `minecraft_environment_variables_additional_variables_custom`.
 #
 # renovate: datasource=docker depName=itzg/minecraft-server
-minecraft_docker_version: 2026.6.0-java16
+minecraft_docker_version: 2026.8.2-java16
 
 minecraft_uid: ""
 minecraft_gid: ""
