@@ -47,7 +47,19 @@ Currently there is one testing scenario available.
 
 ### `default`
 
-Tests a standard Minecraft installation.
+Installs the role, starts the systemd service and then verifies the Minecraft server over the Minecraft protocol itself.
+
+The verification performs a [Server List Ping](https://minecraft.wiki/w/Java_Edition_protocol/Server_List_Ping) — the handshake and status request a Minecraft client makes to render a server in its server list — using [`files/server-list-ping.py`](default/files/server-list-ping.py), which needs nothing beyond the Python standard library. It serves as both the readiness gate and the probe, because the systemd unit runs with `Restart=always`: a crash-looping container keeps the unit `active`, so `systemctl is-active` proves nothing on its own.
+
+From the reply and the service journal, the scenario asserts that:
+
+- the server reports the MOTD and the player slot count that the role's `env` template configured (an unconfigured server reports `A Minecraft Server` and 20 slots);
+- the container announced the image version that `minecraft_docker_version` pins in `defaults/main.yml` — the literal Renovate edits — so a version bump is exercised at the bumped version;
+- the server bound the port set through `minecraft_container_tcp_port`, rather than merely having that port published towards it;
+- `NRestarts` on the systemd unit is zero, so the server has never been resurrected by the `Restart=` policy;
+- a world was written, and the server comes back up over that existing world after a `systemctl restart`.
+
+The scenario leaves the image's `VERSION` at its default of `LATEST`, so it downloads and runs whatever Minecraft release is current. That is deliberate: it is what a default installation of this role does, and it is what catches the image's pinned JRE falling behind what current Minecraft needs.
 
 ## Running
 

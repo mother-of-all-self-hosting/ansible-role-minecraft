@@ -1,5 +1,6 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
@@ -31,9 +32,30 @@ provisioner:
         # Helper variables
         minecraft_debug_service_enabled: false
 
+        # How long the Minecraft server is given to download its server jar,
+        # generate a world and start answering the protocol.
+        minecraft_readiness_deadline_seconds: 480
+
+        # Values that only this role's `env` template could have put in front of
+        # the Minecraft server. They are asserted back out of the Server List Ping
+        # reply, and are deliberately different from what an unconfigured
+        # itzg/minecraft-server reports ("A Minecraft Server", 20 player slots).
+        minecraft_molecule_motd: mash-molecule-minecraft-motd
+        minecraft_molecule_max_players: 37
+
         # Variables for Minecraft
         minecraft_uid: 1000
         minecraft_gid: 1000
+
+        # Deliberately not the server's own default of 25565, so that the test
+        # fails unless `minecraft_container_tcp_port` reaches the server process
+        # instead of only the container-side end of the publish mapping.
+        minecraft_container_tcp_port: 25577
+        minecraft_container_tcp_host_bind_port: "127.0.0.1:{{ minecraft_container_tcp_port }}"
+
+        minecraft_environment_variables_additional_variables: |
+          MOTD={{ minecraft_molecule_motd }}
+          MAX_PLAYERS={{ minecraft_molecule_max_players }}
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles

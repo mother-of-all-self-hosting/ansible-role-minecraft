@@ -1,35 +1,185 @@
-# SPDX-FileCopyrightText: 2026 spatterlight
+# SPDX-FileCopyrightText: 2026 Slavi Pantaleev
 # SPDX-FileCopyrightText: 2026 Suguru Hirahara
+# SPDX-FileCopyrightText: 2026 spatterlight
 #
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 ---
-- name: Verify Minecraft systemd service
+- name: Verify Minecraft
   hosts: all
   become: true
   gather_facts: false
+
+  vars:
+    minecraft_world_path: /var/minecraft/minecraft/data/world/level.dat
+
   tasks:
-    - name: Wait for Minecraft service to become active (up to 180s)
-      ansible.builtin.systemd:
+    # Read as a namespaced dictionary rather than into the play's own variables:
+    # loading the role's defaults on top of the scenario would silently overrule
+    # the values this scenario tunes (the port, the environment variables).
+    - name: Read the version the role pins from its defaults
+      ansible.builtin.include_vars:
+        file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
+        name: minecraft_role_defaults
+
+    # `Restart=always` keeps a crash-looping unit reporting `active`, so the
+    # readiness gate is the Minecraft protocol itself: the same handshake and
+    # status request a Minecraft client performs. Nothing below this can pass
+    # unless a Minecraft server is really serving on the port the role published.
+    - name: Wait for the Minecraft server to answer a Server List Ping
+      ansible.builtin.script:
+        cmd: >-
+          files/server-list-ping.py
+          127.0.0.1
+          {{ minecraft_container_tcp_port }}
+          {{ minecraft_readiness_deadline_seconds }}
+        executable: python3
+      changed_when: false
+      register: minecraft_ping_result
+
+    - name: Parse the Server List Ping reply
+      ansible.builtin.set_fact:
+        minecraft_ping: "{{ minecraft_ping_result.stdout | from_json }}"
+
+    - name: Show the Server List Ping reply
+      ansible.builtin.debug:
+        var: minecraft_ping
+
+    # The MOTD and the player slots exist nowhere but the `env` file this role
+    # renders, so the server answering with them proves the role's configuration
+    # travelled all the way into the running server process.
+    - name: Assert the MOTD the role configured reached the Minecraft server
+      ansible.builtin.assert:
+        that: minecraft_molecule_motd in (minecraft_ping.description | to_json)
+        fail_msg: >-
+          The Minecraft server reports the MOTD
+          {{ minecraft_ping.description | to_json }}, not the configured
+          {{ minecraft_molecule_motd }}. An unconfigured server reports
+          "A Minecraft Server".
+        success_msg: "The Minecraft server reports the configured MOTD"
+
+    - name: Assert the player slots the role configured reached the Minecraft server
+      ansible.builtin.assert:
+        that: minecraft_ping.players.max | int == minecraft_molecule_max_players | int
+        fail_msg: >-
+          The Minecraft server reports {{ minecraft_ping.players.max }} player
+          slots, not the configured {{ minecraft_molecule_max_players }}.
+          An unconfigured server reports 20.
+        success_msg: "The Minecraft server reports the configured player slots"
+
+    - name: Retrieve the Minecraft service log
+      ansible.builtin.command:
+        cmd: journalctl --unit minecraft.service --no-pager
+      changed_when: false
+      register: minecraft_journal_result
+
+    - name: Show the Minecraft service log
+      when: minecraft_debug_service_enabled | bool
+      ansible.builtin.debug:
+        var: minecraft_journal_result.stdout_lines
+
+    # The image announces its own version on startup as
+    # `[init] Image info: buildtime=...,version=<tag>,revision=...`. Asserting
+    # that against the literal in defaults/main.yml - the one Renovate edits -
+    # is what makes a version bump testable rather than merely deployable.
+    - name: Assert the running image is the version the role pins
+      ansible.builtin.assert:
+        that: >-
+          ('version=' ~ minecraft_role_defaults.minecraft_docker_version ~ ',')
+          in minecraft_journal_result.stdout
+        fail_msg: >-
+          The running container did not announce
+          version={{ minecraft_role_defaults.minecraft_docker_version }}.
+        success_msg: >-
+          The running container announced
+          version={{ minecraft_role_defaults.minecraft_docker_version }}
+
+    # Complements the ping: the ping only proves the server is reachable at the
+    # published port, this proves the server itself chose to bind that port
+    # because `minecraft_container_tcp_port` reached it as `SERVER_PORT`.
+    - name: Assert the Minecraft server bound the configured port
+      ansible.builtin.assert:
+        that: >-
+          ('Starting Minecraft server on *:' ~ minecraft_container_tcp_port)
+          in minecraft_journal_result.stdout
+        fail_msg: >-
+          The Minecraft server did not report binding port
+          {{ minecraft_container_tcp_port }}; `minecraft_container_tcp_port` did
+          not reach the server process.
+        success_msg: >-
+          The Minecraft server bound the configured port
+          {{ minecraft_container_tcp_port }}
+
+    # `systemctl is-active` cannot tell a healthy unit from one that
+    # `Restart=always` keeps resurrecting. NRestarts counts only restarts the
+    # Restart= policy made, so anything above zero means the server died on its own.
+    - name: Retrieve the state of the Minecraft systemd service
+      ansible.builtin.systemd_service:
         name: minecraft.service
       register: minecraft_service
-      until: minecraft_service.status.ActiveState == 'active'
-      retries: 36
-      delay: 5
 
-    - name: Assert Minecraft service is active
+    - name: Assert the Minecraft systemd service has not been crash-looping
       ansible.builtin.assert:
-        that: minecraft_service.status.ActiveState == 'active'
-        fail_msg: "minecraft.service not active ({{ minecraft_service.status.ActiveState }})"
-        success_msg: "minecraft.service is active"
+        that:
+          - minecraft_service.status.ActiveState == 'active'
+          - minecraft_service.status.NRestarts | int == 0
+        fail_msg: >-
+          minecraft.service is {{ minecraft_service.status.ActiveState }} after
+          {{ minecraft_service.status.NRestarts }} automatic restart(s).
+        success_msg: "minecraft.service is active and has never been restarted by systemd"
 
-    - name: Retrieve Minecraft service log for debugging
-      when: minecraft_debug_service_enabled | bool
-      ansible.builtin.command:
-        cmd: journalctl -xeu minecraft.service
+    - name: Check that the Minecraft server created a world
+      ansible.builtin.stat:
+        path: "{{ minecraft_world_path }}"
+      register: minecraft_world_stat
+
+    - name: Assert the Minecraft server created a world
+      ansible.builtin.assert:
+        that: minecraft_world_stat.stat.exists
+        fail_msg: "No world was written to {{ minecraft_world_path }}"
+        success_msg: "The Minecraft server wrote a world to {{ minecraft_world_path }}"
+
+    # Everything above ran against a first start on an empty data directory.
+    # What operators do far more often is restart an existing server over an
+    # existing world save, so exercise that too.
+    - name: Restart the Minecraft systemd service
+      ansible.builtin.systemd_service:
+        name: minecraft.service
+        state: restarted
+
+    - name: Wait for the restarted Minecraft server to answer a Server List Ping
+      ansible.builtin.script:
+        cmd: >-
+          files/server-list-ping.py
+          127.0.0.1
+          {{ minecraft_container_tcp_port }}
+          {{ minecraft_readiness_deadline_seconds }}
+        executable: python3
       changed_when: false
+      register: minecraft_ping_after_restart_result
 
-    - name: Show Minecraft systemd service status summary
-      ansible.builtin.debug:
-        msg:
-          - "Minecraft systemd: {{ minecraft_service.status.ActiveState }}"
+    - name: Assert the restarted Minecraft server still serves the role's configuration
+      ansible.builtin.assert:
+        that: >-
+          minecraft_molecule_motd
+          in ((minecraft_ping_after_restart_result.stdout | from_json).description | to_json)
+        fail_msg: "The restarted Minecraft server does not report the configured MOTD"
+        success_msg: "The restarted Minecraft server reports the configured MOTD"
+
+    - name: Retrieve the state of the Minecraft systemd service after the restart
+      ansible.builtin.systemd_service:
+        name: minecraft.service
+      register: minecraft_service_after_restart
+
+    # `systemctl restart` does not touch NRestarts - only the Restart= policy
+    # does - so this still catches the server dying on the second start.
+    - name: Assert the restarted Minecraft systemd service has not been crash-looping
+      ansible.builtin.assert:
+        that:
+          - minecraft_service_after_restart.status.ActiveState == 'active'
+          - minecraft_service_after_restart.status.NRestarts | int == 0
+        fail_msg: >-
+          After the restart, minecraft.service is
+          {{ minecraft_service_after_restart.status.ActiveState }} after
+          {{ minecraft_service_after_restart.status.NRestarts }} automatic restart(s).
+        success_msg: "minecraft.service survived a restart over an existing world"
