@@ -1,5 +1,9 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "No patch-automerge: a `patch` of itzg/minecraft-server is not a patch of the code that writes into the operator's data directory - every one of them bumps mc-image-helper by whole minor versions (1.55.4 -> 1.56.3 across 2026.4.1 -> 2026.4.2, 1.64.1 -> 1.66.1 across 2026.8.0 -> 2026.8.1) and rewrites start-* scripts.",
+    "A Minecraft world is upgraded forward-only on load and this role keeps no backup of it, so a Molecule run that installs from an empty data directory cannot be evidence that a bump is safe for an existing one."
+  ],
   "extends": [
     "github>mother-of-all-self-hosting/renovate-config#v1.0.0"
   ]
