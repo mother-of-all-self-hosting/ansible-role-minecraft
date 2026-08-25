@@ -53,7 +53,10 @@ minecraft_container_network_deletion_enabled: true
 # Takes an "<ip>:<port>" or "<port>" value (e.g. "127.0.0.1:2586"), or empty string to not expose.
 minecraft_container_tcp_host_bind_port: "{{ minecraft_container_tcp_port }}"
 
-# The port number in the container
+# The port number in the container.
+# Passed to the server as the `SERVER_PORT` environment variable, so the server
+# actually binds to it. Set `SERVER_PORT` in
+# `minecraft_environment_variables_additional_variables` to override.
 minecraft_container_tcp_port: 25565
 
 # A list of additional container networks that the container would be connected to.
