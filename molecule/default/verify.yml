@@ -67,9 +67,32 @@
           An unconfigured server reports 20.
         success_msg: "The Minecraft server reports the configured player slots"
 
+    # `systemctl is-active` cannot tell a healthy unit from one that
+    # `Restart=always` keeps resurrecting. NRestarts counts only restarts the
+    # Restart= policy made, so anything above zero means the server died on its own.
+    - name: Retrieve the state of the Minecraft systemd service
+      ansible.builtin.systemd_service:
+        name: minecraft.service
+      register: minecraft_service
+
+    - name: Assert the Minecraft systemd service has not been crash-looping
+      ansible.builtin.assert:
+        that:
+          - minecraft_service.status.ActiveState == 'active'
+          - minecraft_service.status.NRestarts | int == 0
+        fail_msg: >-
+          minecraft.service is {{ minecraft_service.status.ActiveState }} after
+          {{ minecraft_service.status.NRestarts }} automatic restart(s).
+        success_msg: "minecraft.service is active and has never been restarted by systemd"
+
+    # Scoped to the unit's current invocation rather than to the unit, so that
+    # the assertions below are about the process that answered the ping and not
+    # about some earlier start of the same unit that is still in the journal.
     - name: Retrieve the Minecraft service log
       ansible.builtin.command:
-        cmd: journalctl --unit minecraft.service --no-pager
+        cmd: >-
+          journalctl --no-pager
+          _SYSTEMD_INVOCATION_ID={{ minecraft_service.status.InvocationID }}
       changed_when: false
       register: minecraft_journal_result
 
@@ -109,24 +132,6 @@
         success_msg: >-
           The Minecraft server bound the configured port
           {{ minecraft_container_tcp_port }}
-
-    # `systemctl is-active` cannot tell a healthy unit from one that
-    # `Restart=always` keeps resurrecting. NRestarts counts only restarts the
-    # Restart= policy made, so anything above zero means the server died on its own.
-    - name: Retrieve the state of the Minecraft systemd service
-      ansible.builtin.systemd_service:
-        name: minecraft.service
-      register: minecraft_service
-
-    - name: Assert the Minecraft systemd service has not been crash-looping
-      ansible.builtin.assert:
-        that:
-          - minecraft_service.status.ActiveState == 'active'
-          - minecraft_service.status.NRestarts | int == 0
-        fail_msg: >-
-          minecraft.service is {{ minecraft_service.status.ActiveState }} after
-          {{ minecraft_service.status.NRestarts }} automatic restart(s).
-        success_msg: "minecraft.service is active and has never been restarted by systemd"
 
     - name: Check that the Minecraft server created a world
       ansible.builtin.stat:
