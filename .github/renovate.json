@@ -5,6 +5,6 @@
     "A Minecraft world is upgraded forward-only on load and this role keeps no backup of it, so a Molecule run that installs from an empty data directory cannot be evidence that a bump is safe for an existing one."
   ],
   "extends": [
-    "github>mother-of-all-self-hosting/renovate-config#v1.0.0"
+    "github>mother-of-all-self-hosting/renovate-config#v1.1.0"
   ]
 }
