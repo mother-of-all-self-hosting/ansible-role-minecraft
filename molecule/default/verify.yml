@@ -14,13 +14,13 @@
     minecraft_world_path: /var/minecraft/minecraft/data/world/level.dat
 
   tasks:
-    # Read as a namespaced dictionary rather than into the play's own variables:
-    # loading the role's defaults on top of the scenario would silently overrule
-    # the values this scenario tunes (the port, the environment variables).
-    - name: Read the version the role pins from its defaults
+    # The role is not included in this playbook, so its defaults are not in
+    # scope. Reading defaults/main.yml directly ties the version assertion
+    # below.
+    - name: Load the role defaults
       ansible.builtin.include_vars:
         file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
-        name: minecraft_role_defaults
+        name: minecraft_defaults
 
     # `Restart=always` keeps a crash-looping unit reporting `active`, so the
     # readiness gate is the Minecraft protocol itself: the same handshake and
