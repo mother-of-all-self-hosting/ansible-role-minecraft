@@ -102,20 +102,12 @@
         var: minecraft_journal_result.stdout_lines
 
     # The image announces its own version on startup as
-    # `[init] Image info: buildtime=...,version=<tag>,revision=...`. Asserting
-    # that against the literal in defaults/main.yml - the one Renovate edits -
-    # is what makes a version bump testable rather than merely deployable.
-    - name: Assert the running image is the version the role pins
+    # `[init] Image info: buildtime=...,version=<tag>,revision=...`.
+    - name: Assert the running Minecraft is the version this role installs
       ansible.builtin.assert:
-        that: >-
-          ('version=' ~ minecraft_role_defaults.minecraft_docker_version ~ ',')
-          in minecraft_journal_result.stdout
-        fail_msg: >-
-          The running container did not announce
-          version={{ minecraft_role_defaults.minecraft_docker_version }}.
-        success_msg: >-
-          The running container announced
-          version={{ minecraft_role_defaults.minecraft_docker_version }}
+        that: "('version=' ~ minecraft_defaults.minecraft_docker_version ~ ',') in minecraft_journal_result.stdout"
+        fail_msg: "Minecraft did not report {{ minecraft_defaults.minecraft_docker_version }}"
+        success_msg: "Minecraft reported {{ minecraft_defaults.minecraft_docker_version }}"
 
     # Complements the ping: the ping only proves the server is reachable at the
     # published port, this proves the server itself chose to bind that port
