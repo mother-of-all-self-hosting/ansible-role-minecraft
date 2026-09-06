@@ -31,7 +31,7 @@ minecraft_data_path: "{{ minecraft_base_path }}/data"
 # the older JRE can actually run.
 #
 # renovate: datasource=docker depName=itzg/minecraft-server
-minecraft_docker_version: 2026.8.2
+minecraft_docker_version: 2026.9.0
 
 minecraft_uid: ""
 minecraft_gid: ""
