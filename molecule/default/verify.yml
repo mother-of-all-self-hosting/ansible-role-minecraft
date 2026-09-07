@@ -67,13 +67,31 @@
           An unconfigured server reports 20.
         success_msg: "The Minecraft server reports the configured player slots"
 
-    # `systemctl is-active` cannot tell a healthy unit from one that
-    # `Restart=always` keeps resurrecting. NRestarts counts only restarts the
-    # Restart= policy made, so anything above zero means the server died on its own.
-    - name: Retrieve the state of the Minecraft systemd service
+    - name: Wait for the Minecraft systemd service to become active (up to 180s)
       ansible.builtin.systemd_service:
         name: minecraft.service
       register: minecraft_service
+      until: minecraft_service.status.ActiveState == 'active'
+      retries: 36
+      delay: 5
+      # So that giving up is reported by the assertion below rather than as a
+      # wall of systemd unit properties.
+      failed_when: false
+
+    # `Restart=always` in the systemd unit means that even a container which crashes
+    # and gets restarted reads as active here, so this is a precondition rather than
+    # a result.
+    - name: Assert the Minecraft systemd service is active
+      ansible.builtin.assert:
+        that: minecraft_service.status.ActiveState == 'active'
+        fail_msg: "minecraft.service is not active ({{ minecraft_service.status.ActiveState }})"
+        success_msg: "minecraft.service is active"
+
+    - name: Retrieve the Minecraft systemd service log for debugging
+      when: minecraft_debug_service_enabled | bool
+      ansible.builtin.command:
+        cmd: journalctl -xeu minecraft.service
+      changed_when: false
 
     - name: Assert the Minecraft systemd service has not been crash-looping
       ansible.builtin.assert:
@@ -88,7 +106,7 @@
     # Scoped to the unit's current invocation rather than to the unit, so that
     # the assertions below are about the process that answered the ping and not
     # about some earlier start of the same unit that is still in the journal.
-    - name: Retrieve the Minecraft service log
+    - name: Retrieve the Minecraft systemd service log
       ansible.builtin.command:
         cmd: >-
           journalctl --no-pager
@@ -96,7 +114,7 @@
       changed_when: false
       register: minecraft_journal_result
 
-    - name: Show the Minecraft service log
+    - name: Show the Minecraft systemd service log
       when: minecraft_debug_service_enabled | bool
       ansible.builtin.debug:
         var: minecraft_journal_result.stdout_lines
