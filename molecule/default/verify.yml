@@ -90,7 +90,7 @@
     - name: Retrieve the Minecraft systemd service log for debugging
       when: minecraft_debug_service_enabled | bool
       ansible.builtin.command:
-        cmd: journalctl -xeu minecraft.service
+        cmd: journalctl --no-pager --output=cat --unit=minecraft.service
       changed_when: false
 
     - name: Assert the Minecraft systemd service has not been crash-looping
