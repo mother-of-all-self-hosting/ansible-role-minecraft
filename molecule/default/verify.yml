@@ -13,6 +13,9 @@
   vars:
     minecraft_world_path: /var/minecraft/minecraft/data/world/level.dat
 
+    minecraft_verify_units:
+      - minecraft.service
+
   tasks:
     - name: Verify that Minecraft works
       block:
@@ -69,13 +72,14 @@
               An unconfigured server reports 20.
             success_msg: "The Minecraft server reports the configured player slots"
 
-        - name: Wait for the Minecraft systemd service to become active (up to 180s)
+        - name: Wait for the Minecraft systemd services to become active (up to 180s each)
           ansible.builtin.systemd_service:
-            name: minecraft.service
-          register: minecraft_service
-          until: minecraft_service.status.ActiveState == 'active'
+            name: "{{ item }}"
+          register: minecraft_services
+          until: minecraft_services.status.ActiveState == 'active'
           retries: 36
           delay: 5
+          loop: "{{ minecraft_verify_units }}"
           # So that giving up is reported by the assertion below rather than as a
           # wall of systemd unit properties.
           failed_when: false
@@ -83,17 +87,25 @@
         # `Restart=always` in the systemd unit means that even a container which crashes
         # and gets restarted reads as active here, so this is a precondition rather than
         # a result.
-        - name: Assert the Minecraft systemd service is active
+        - name: Assert the Minecraft systemd services are active
           ansible.builtin.assert:
-            that: minecraft_service.status.ActiveState == 'active'
-            fail_msg: "minecraft.service is not active ({{ minecraft_service.status.ActiveState }})"
-            success_msg: "minecraft.service is active"
+            that: minecraft_services.results | map(attribute='status.ActiveState') | unique | list == ['active']
+            fail_msg: >-
+              Not every service is active:
+              {{ dict(minecraft_verify_units | zip(minecraft_services.results | map(attribute='status.ActiveState'))) }}
+            success_msg: "Every systemd service is active"
 
-        - name: Retrieve the Minecraft systemd service log for debugging
+        - name: Retrieve the Minecraft systemd services log for debugging
           when: minecraft_debug_service_enabled | bool
           ansible.builtin.command:
-            cmd: journalctl --no-pager --output=cat --unit=minecraft.service
+            cmd: "journalctl --no-pager --output=cat --unit={{ item }}"
           changed_when: false
+          loop: "{{ minecraft_verify_units }}"
+
+        - name: Register minecraft.service
+          ansible.builtin.systemd_service:
+            name: minecraft.service
+          register: minecraft_service
 
         - name: Assert the Minecraft systemd service has not been crash-looping
           ansible.builtin.assert:
@@ -200,6 +212,11 @@
               {{ minecraft_service_after_restart.status.ActiveState }} after
               {{ minecraft_service_after_restart.status.NRestarts }} automatic restart(s).
             success_msg: "minecraft.service survived a restart over an existing world"
+
+        - name: Show the Minecraft verification summary
+          ansible.builtin.debug:
+            msg:
+              - "Minecraft systemd: {% for unit, state in minecraft_verify_units | zip(minecraft_services.results | map(attribute='status.ActiveState')) %}{{ unit }} ({{ state }}){% if not loop.last %}, {% endif %}{% endfor %}"
 
       rescue:
         # Whatever went wrong, the reason is almost always in the systemd service log.
