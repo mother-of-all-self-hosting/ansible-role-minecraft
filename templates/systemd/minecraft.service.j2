@@ -24,40 +24,40 @@ Environment="HOME={{ devture_systemd_docker_base_systemd_unit_home_path }}"
 ExecStartPre={{ devture_systemd_docker_base_host_command_sh }} -c '{{ minecraft_container_cleanup_command | trim | replace("\n", " ") }}'
 
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} create \
-    --rm \
-    --name={{ minecraft_identifier }} \
-    --log-driver=none \
-    --user={{ minecraft_uid }}:{{ minecraft_gid }} \
-    --cap-drop=ALL \
-    --network={{ minecraft_container_network }} \
-    {% if minecraft_container_tcp_host_bind_port %}
-    -p {{ minecraft_container_tcp_host_bind_port }}:{{ minecraft_container_tcp_port }} \
-    {% endif %}
-    {% for cap in minecraft_security_allow_capabilities %}
-    --cap-add={{ cap }} \
-    {% endfor %}
-    {% if not minecraft_security_write_access %}
-    --read-only \
-    {% endif %}
-    {% if minecraft_security_privileged %}
-    --privileged \
-    {% endif %}
-    {% for dns in minecraft_container_dns_servers %}
-    --dns={{ dns }} \
-    {% endfor %}
-    --env-file={{ minecraft_base_path }}/env \
-    --label-file={{ minecraft_base_path }}/labels \
-    -v {{ minecraft_data_path }}:/data \
-    {% for volume in minecraft_container_additional_volumes %}
-    --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
-    {% endfor %}
-    {% for arg in minecraft_container_extra_arguments %}
-    {{ arg }} \
-    {% endfor %}
-    {{ minecraft_container_image }} \
-    {% for arg in minecraft_process_extra_arguments %}
-    {{ arg }} \
-    {% endfor %}
+      --rm \
+      --name={{ minecraft_identifier }} \
+      --log-driver=none \
+      --user={{ minecraft_uid }}:{{ minecraft_gid }} \
+      --cap-drop=ALL \
+      --network={{ minecraft_container_network }} \
+      {% if minecraft_container_tcp_host_bind_port %}
+      -p {{ minecraft_container_tcp_host_bind_port }}:{{ minecraft_container_tcp_port }} \
+      {% endif %}
+      {% for cap in minecraft_security_allow_capabilities %}
+      --cap-add={{ cap }} \
+      {% endfor %}
+      {% if not minecraft_security_write_access %}
+      --read-only \
+      {% endif %}
+      {% if minecraft_security_privileged %}
+      --privileged \
+      {% endif %}
+      {% for dns in minecraft_container_dns_servers %}
+      --dns={{ dns }} \
+      {% endfor %}
+      --env-file={{ minecraft_base_path }}/env \
+      --label-file={{ minecraft_base_path }}/labels \
+      -v {{ minecraft_data_path }}:/data \
+      {% for volume in minecraft_container_additional_volumes %}
+      --mount type={{ volume.type | default('bind' if '/' in volume.src else 'volume') }},src={{ volume.src }},dst={{ volume.dst }}{{ (',' + volume.options) if volume.options | default('') else '' }} \
+      {% endfor %}
+      {% for arg in minecraft_container_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
+      {{ minecraft_container_image }} \
+      {% for arg in minecraft_process_extra_arguments %}
+      {{ arg }} \
+      {% endfor %}
 
 {% for network in minecraft_container_additional_networks %}
 ExecStartPre={{ devture_systemd_docker_base_host_command_docker }} network connect {{ network }} {{ minecraft_identifier }}
