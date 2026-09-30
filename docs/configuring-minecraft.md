@@ -25,7 +25,7 @@ Minecraft is a first-person open-world procedurally-generated voxel-based sandbo
 See the project's [documentation](https://docker-minecraft-server.readthedocs.io/en/latest/) to learn what the server does and why it might be useful to you.
 
 >[!WARNING]
-> Minecraft Server on Docker (Java Edition) is published under the Apache-2.0 license, but Minecraft itself is proprietary software, and by using this role you are agreeing to the [EULA](https://www.minecraft.net/en-us/eula).
+> Minecraft Server on Docker (Java Edition) is published under the Apache-2.0 license, but Minecraft itself is proprietary software. By using this role you are agreeing to the [EULA](https://www.minecraft.net/en-us/eula). The role sets `EULA=TRUE` for the container by default (see `minecraft_environment_variables_eula`); the server refuses to start without it.
 
 ## Adjusting the playbook configuration
 
@@ -48,6 +48,21 @@ minecraft_enabled: true
 #                                                                      #
 ########################################################################
 ```
+
+### Selecting Minecraft version you get (optional)
+
+`minecraft_docker_version` pins the Minecraft Server image — it is **not** the Minecraft version. The Minecraft version comes from the image's `VERSION` environment variable, which defaults to `LATEST`.
+
+Two consequences are worth knowing about before you run a server anybody cares about:
+
+- **The world is upgraded forward-only.** With `VERSION=LATEST`, a restart that happens to land after a new Minecraft release starts that release against your existing world. Minecraft rewrites the world's region files into the newer format on load, and an older server will then refuse to open them. This role takes no backup of `minecraft_data_path` for you. Pin `VERSION` to a concrete Minecraft release if you would rather choose when that happens:
+
+  ```yaml
+  minecraft_environment_variables_additional_variables: |
+    VERSION=1.23.4
+  ```
+
+- **Leave the image tag unflavoured unless you also pin `VERSION`.** The `-javaNN` (and `-alpine`, `-graalvm`, …) flavours of the image pin a specific JRE, and a Minecraft release built for a newer JRE will not start on them. The unflavoured tag tracks the JRE upstream currently builds against, which is what `VERSION=LATEST` needs.
 
 ### Extending the configuration
 
