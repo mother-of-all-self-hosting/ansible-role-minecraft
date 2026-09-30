@@ -18,11 +18,11 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 # Setting up Minecraft Server
 
-This is an [Ansible](https://www.ansible.com/) role which installs [Minecraft Server](https://actualbudget.org) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [Minecraft Server](https://minecraftbudget.org) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
 Minecraft Server is a local-first personal finance tool.
 
-See the project's [documentation](https://actualbudget.org/docs/) to learn what Minecraft Server does and why it might be useful to you.
+See the project's [documentation](https://minecraftbudget.org/docs/) to learn what Minecraft Server does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 
@@ -33,15 +33,15 @@ To enable Minecraft Server with this role, add the following configuration to yo
 ```yaml
 ########################################################################
 #                                                                      #
-# actual                                                               #
+# minecraft                                                            #
 #                                                                      #
 ########################################################################
 
-actual_enabled: true
+minecraft_enabled: true
 
 ########################################################################
 #                                                                      #
-# /actual                                                              #
+# /minecraft                                                           #
 #                                                                      #
 ########################################################################
 ```
@@ -51,12 +51,12 @@ actual_enabled: true
 To enable Minecraft Server you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
 
 ```yaml
-actual_hostname: "example.com"
+minecraft_hostname: "example.com"
 ```
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
-**Note**: hosting Minecraft Server under a subpath (by configuring the `actual_path_prefix` variable) does not seem to be possible due to Minecraft Server's technical limitations.
+**Note**: hosting Minecraft Server under a subpath (by configuring the `minecraft_path_prefix` variable) does not seem to be possible due to Minecraft Server's technical limitations.
 
 ### Extending the configuration
 
@@ -64,7 +64,7 @@ There are some additional things you may wish to configure about the service.
 
 Take a look at:
 
-- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `actual_environment_variables_additional_variables` variable
+- [`defaults/main.yml`](../defaults/main.yml) for some variables that you can customize via your `vars.yml` file. You can override settings (even those that don't have dedicated playbook variables) using the `minecraft_environment_variables_additional_variables` variable
 
 ## Installing
 
@@ -84,4 +84,4 @@ After running the command for installation, Minecraft Server becomes available a
 
 ### Check the service's logs
 
-You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu actual` (or how you/your playbook named the service, e.g. `mash-actual`).
+You can find the logs in [systemd-journald](https://www.freedesktop.org/software/systemd/man/systemd-journald.service.html) by logging in to the server with SSH and running `journalctl -fu minecraft` (or how you/your playbook named the service, e.g. `mash-minecraft`).
