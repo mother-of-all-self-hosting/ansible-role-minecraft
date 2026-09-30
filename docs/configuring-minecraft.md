@@ -16,17 +16,17 @@ SPDX-FileCopyrightText: 2024-2026 Suguru Hirahara
 SPDX-License-Identifier: AGPL-3.0-or-later
 -->
 
-# Setting up Actual
+# Setting up Minecraft Server
 
-This is an [Ansible](https://www.ansible.com/) role which installs [Actual](https://actualbudget.org) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
+This is an [Ansible](https://www.ansible.com/) role which installs [Minecraft Server](https://actualbudget.org) to run as a [Docker](https://www.docker.com/) container wrapped in a systemd service.
 
-Actual is a local-first personal finance tool.
+Minecraft Server is a local-first personal finance tool.
 
-See the project's [documentation](https://actualbudget.org/docs/) to learn what Actual does and why it might be useful to you.
+See the project's [documentation](https://actualbudget.org/docs/) to learn what Minecraft Server does and why it might be useful to you.
 
 ## Adjusting the playbook configuration
 
-To enable Actual with this role, add the following configuration to your `vars.yml` file.
+To enable Minecraft Server with this role, add the following configuration to your `vars.yml` file.
 
 **Note**: the path should be something like `inventory/host_vars/mash.example.com/vars.yml` if you use the [MASH Ansible playbook](https://github.com/mother-of-all-self-hosting/mash-playbook).
 
@@ -48,7 +48,7 @@ actual_enabled: true
 
 ### Set the hostname
 
-To enable Actual you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
+To enable Minecraft Server you need to set the hostname as well. To do so, add the following configuration to your `vars.yml` file. Make sure to replace `example.com` with your own value.
 
 ```yaml
 actual_hostname: "example.com"
@@ -56,7 +56,7 @@ actual_hostname: "example.com"
 
 After adjusting the hostname, make sure to adjust your DNS records to point the domain to your server.
 
-**Note**: hosting Actual under a subpath (by configuring the `actual_path_prefix` variable) does not seem to be possible due to Actual's technical limitations.
+**Note**: hosting Minecraft Server under a subpath (by configuring the `actual_path_prefix` variable) does not seem to be possible due to Minecraft Server's technical limitations.
 
 ### Extending the configuration
 
@@ -78,7 +78,7 @@ If you use the MASH playbook, the shortcut commands with the [`just` program](ht
 
 ## Usage
 
-After running the command for installation, Actual becomes available at the specified hostname like `https://example.com`. To use it, open the URL on the browser and create an account.
+After running the command for installation, Minecraft Server becomes available at the specified hostname like `https://example.com`. To use it, open the URL on the browser and create an account.
 
 ## Troubleshooting
 
