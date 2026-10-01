@@ -19,8 +19,7 @@ minecraft_base_path: "/var/minecraft/{{ minecraft_identifier }}"
 minecraft_data_path: "{{ minecraft_base_path }}/data"
 
 # This is the version of the itzg/minecraft-server image, NOT the Minecraft
-# server version. To set the Minecraft Server version, set the VERSION
-# environment variable in `minecraft_environment_variables_additional_variables`.
+# server version. To set the Minecraft Server version, set `minecraft_environment_variables_version`.
 #
 # Keep this on the unflavoured tag. Refer to the documentation for details.
 #
@@ -187,7 +186,31 @@ minecraft_container_dns_servers_default:
 
 minecraft_container_dns_servers_custom: []
 
+# Specify the timezone
+minecraft_environment_variables_tz: UTC
+
+# Control if EURA is accepted
+# Setting other values will prevent the Minecraft Server from being started
 minecraft_environment_variables_eula: "TRUE"
+
+# Specify the server type
+minecraft_environment_variables_type: ""
+
+# Specify the Minecraft Server version
+minecraft_environment_variables_version: ""
+
+# Specify the max heap size
+minecraft_environment_variables_max_memory: ""
+
+# Specify the difficulty level
+# Valid values: peaceful, easy, normal, hard
+minecraft_environment_variables_difficulty: ""
+
+minecraft_environment_variables_view_distance: ""
+
+minecraft_environment_variables_pvp: ""
+
+minecraft_environment_variables_initial_enabled_packs: ""
 
 # Additional environment variables.
 # See: https://docker-minecraft-server.readthedocs.io/en/latest/variables/

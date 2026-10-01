@@ -51,18 +51,19 @@ minecraft_enabled: true
 
 ### Selecting Minecraft version you get (optional)
 
-`minecraft_docker_version` pins the Minecraft Server image — it is **not** the Minecraft version. The Minecraft version comes from the image's `VERSION` environment variable, which defaults to `LATEST`.
+`minecraft_docker_version` pins the Minecraft Server image. It is **not** the Minecraft version. The Minecraft version comes from the `minecraft_environment_variables_version` variable, which defaults to `LATEST`.
 
 Two consequences are worth knowing about before you run a server anybody cares about:
 
-- **The world is upgraded forward-only.** With `VERSION=LATEST`, a restart that happens to land after a new Minecraft release starts that release against your existing world. Minecraft rewrites the world's region files into the newer format on load, and an older server will then refuse to open them. This role takes no backup of `minecraft_data_path` for you. Pin `VERSION` to a concrete Minecraft release if you would rather choose when that happens:
+- **The world is upgraded forward-only.** With `minecraft_environment_variables_version: LATEST`, a restart that happens to land after a new Minecraft release starts that release against your existing world. Minecraft then rewrites the world's region files into the newer format on load, and an older server will then refuse to open them. If you want to choose when that happens, pin `minecraft_environment_variables_version` to a concrete Minecraft release by adding the following configuration to your `vars.yml` file.
 
   ```yaml
-  minecraft_environment_variables_additional_variables: |
-    VERSION=1.23.4
+  minecraft_environment_variables_version: 1.23.4
   ```
 
 - **Leave the image tag unflavoured unless you also pin `VERSION`.** The `-javaNN` (and `-alpine`, `-graalvm`, …) flavours of the image pin a specific JRE, and a Minecraft release built for a newer JRE will not start on them. The unflavoured tag tracks the JRE upstream currently builds against, which is what `VERSION=LATEST` needs.
+
+Refer to [this page](https://docker-minecraft-server.readthedocs.io/en/latest/versions/minecraft/) on the documentation for details about versions.
 
 ### Extending the configuration
 
@@ -91,17 +92,19 @@ Here is an example set of configurations for running a Minecraft Server instance
 ```yaml
 minecraft_container_tcp_host_bind_port: 25565
 
+minecraft_environment_variables_type: paper
+minecraft_environment_variables_version: LATEST
+minecraft_environment_variables_max_memory: 2G
+minecraft_environment_variables_difficulty: hard
+minecraft_environment_variables_view_distance: 16
+minecraft_environment_variables_pvp: true
+minecraft_environment_variables_initial_enabled_packs: vanilla,bundle
 minecraft_environment_variables_additional_variables: |
   MOTD=[Your Server Name Here]
-  TYPE=PAPER
-  VERSION=latest
   INIT_MEMORY=500M
-  MAX_MEMORY=2G
   USE_AIKAR_FLAGS=true
   STOP_SERVER_ANNOUNCE_DELAY=10
-  TZ=Europe/London
   LOG_TIMESTAMP=true
-  DIFFICULTY=hard
   ENABLE_WHITELIST=true
   ENFORCE_WHITELIST=true
   WHITELIST=[Your Minecraft IGN Here]
@@ -110,12 +113,9 @@ minecraft_environment_variables_additional_variables: |
   ENABLE_COMMAND_BLOCK=true
   SNOOPER_ENABLED=false
   SPAWN_PROTECTION=0
-  VIEW_DISTANCE=16
-  PVP=true
   ALLOW_FLIGHT=TRUE
   SIMULATION_DISTANCE=16
   PLAYER_IDLE_TIMEOUT=0
-  INITIAL_ENABLED_PACKS=vanilla,bundle
 ```
 
 ## Installing
