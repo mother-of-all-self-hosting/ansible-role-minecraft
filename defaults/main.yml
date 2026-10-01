@@ -24,7 +24,7 @@ minecraft_data_path: "{{ minecraft_base_path }}/data"
 # Keep this on the unflavoured tag. Refer to the documentation for details.
 #
 # renovate: datasource=docker depName=itzg/minecraft-server
-minecraft_docker_version: 2026.9.1
+minecraft_docker_version: 2026.9.2
 
 minecraft_uid: ""
 minecraft_gid: ""
