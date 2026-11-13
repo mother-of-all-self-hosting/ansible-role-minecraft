@@ -47,3 +47,41 @@
       Before changing any of the `minecraft_security_` settings, please read
       the section on Security Settings in defaults/main.yml of the role, and
       set `minecraft_security_mode` to `insecure` to acknowledge the risks.
+
+- name: Validate Minecraft Server web interface settings
+  when: minecraft_web_interfaces | length > 0
+  block:
+    - name: Validate that each web interface has a name, hostname and port
+      ansible.builtin.assert:
+        that:
+          - item.name is defined and item.name | string | length > 0
+          - item.hostname is defined and item.hostname | string | length > 0
+          - item.port is defined and item.port | int > 0
+        fail_msg: >-
+          Each entry in `minecraft_web_interfaces` needs a non-empty `name` and
+          `hostname`, and a positive `port` (invalid entry: {{ item }}).
+        quiet: true
+      loop: "{{ minecraft_web_interfaces }}"
+      loop_control:
+        label: "{{ item.name | default('<unnamed>') }}"
+
+    - name: Validate that web interface names are unique
+      ansible.builtin.assert:
+        that:
+          - minecraft_web_interfaces | map(attribute='name') | list | length == minecraft_web_interfaces | map(attribute='name') | unique | list | length
+        fail_msg: >-
+          The names in `minecraft_web_interfaces` must be unique, because they
+          are used to build the Traefik router and service names.
+        quiet: true
+
+    - name: Validate the Traefik settings used for the web interfaces
+      when: minecraft_container_labels_traefik_enabled | bool
+      ansible.builtin.assert:
+        that:
+          - minecraft_container_labels_traefik_docker_network | string | length > 0
+          - minecraft_container_labels_traefik_entrypoints | string | length > 0
+        fail_msg: >-
+          When `minecraft_web_interfaces` is set, both
+          `minecraft_container_labels_traefik_docker_network` and
+          `minecraft_container_labels_traefik_entrypoints` need to be set.
+        quiet: true

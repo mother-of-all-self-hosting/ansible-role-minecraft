@@ -12,6 +12,7 @@
 
   vars:
     minecraft_world_path: /var/minecraft/minecraft/data/world/level.dat
+    minecraft_labels_path: /var/minecraft/minecraft/labels
 
     minecraft_verify_units:
       - minecraft.service
@@ -26,6 +27,46 @@
           ansible.builtin.include_vars:
             file: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') }}/defaults/main.yml"
             name: minecraft_defaults
+
+        # The labels file only exists if `labels.j2` rendered, and the router
+        # labels only exist if the web interface was processed, so reading it
+        # back proves the template's output reached the container.
+        - name: Read the container labels file
+          ansible.builtin.slurp:
+            src: "{{ minecraft_labels_path }}"
+          register: minecraft_labels_result
+
+        - name: Parse the container labels file
+          ansible.builtin.set_fact:
+            minecraft_labels: "{{ minecraft_labels_result.content | b64decode }}"
+
+        - name: Assert the Traefik labels for the web interface were rendered
+          ansible.builtin.assert:
+            that:
+              - "traefik.enable=true in minecraft_labels"
+              - "traefik.docker.network=traefik in minecraft_labels"
+              - "traefik.http.routers.minecraft-bluemap.rule=Host(`bluemap.example.com`) in minecraft_labels"
+              - "traefik.http.routers.minecraft-bluemap.entrypoints=web-secure in minecraft_labels"
+              - "traefik.http.routers.minecraft-bluemap.tls=true in minecraft_labels"
+              - "traefik.http.routers.minecraft-bluemap.tls.certResolver=default in minecraft_labels"
+              - "traefik.http.services.minecraft-bluemap.loadbalancer.server.port=8100 in minecraft_labels"
+            fail_msg: |
+              The Traefik labels for the web interface are missing or incorrect.
+              Labels file:
+              {{ minecraft_labels }}
+            success_msg: The Traefik labels for the web interface were rendered
+
+        # The role owns the generated labels, but `minecraft_container_labels_additional_labels`
+        # belongs to the user. Rendering one must not drop the other.
+        - name: Assert the user's additional labels were preserved
+          ansible.builtin.assert:
+            that:
+              - "molecule.test/label=present in minecraft_labels"
+            fail_msg: |
+              The user's additional labels were dropped from the labels file.
+              Labels file:
+              {{ minecraft_labels }}
+            success_msg: The user's additional labels were preserved
 
         # `Restart=always` keeps a crash-looping unit reporting `active`, so the
         # readiness gate is the Minecraft protocol itself: the same handshake and

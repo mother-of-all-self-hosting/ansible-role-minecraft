@@ -76,6 +76,53 @@ Take a look at:
 
 Refer to [the official documentation](https://docker-minecraft-server.readthedocs.io/en/latest/variables/) for a complete list of Minecraft Server's config options that you can put in `minecraft_environment_variables_additional_variables`.
 
+### Exposing plugin web interfaces through Traefik (optional)
+
+Some plugins run a web server inside the Minecraft container. Examples are [BlueMap](https://bluemap.bluecolored.de/) and [Dynmap](https://github.com/webbukkit/dynmap), which serve an interactive map of the world.
+
+To expose such an interface through [Traefik](https://doc.traefik.io/traefik/), add it to `minecraft_web_interfaces` and enable the role's Traefik labels:
+
+```yaml
+minecraft_container_labels_traefik_enabled: true
+minecraft_container_labels_traefik_docker_network: traefik
+
+# The role does not create this network. It needs to be the network your Traefik
+# instance uses, and it needs to exist already.
+minecraft_container_additional_networks_custom:
+  - traefik
+
+minecraft_web_interfaces:
+  - name: bluemap
+    hostname: bluemap.example.com
+    port: 8100
+  - name: dynmap
+    hostname: dynmap.example.com
+    port: 8123
+```
+
+Each entry needs:
+
+- `name`: a unique name, used to build the Traefik router and service names. Use only characters which are valid in Traefik router names (e.g. lowercase letters, digits and dashes).
+- `hostname`: the hostname at which the interface is served.
+- `port`: the port the plugin's web server listens on inside the container.
+
+The role attaches one router and one service per entry to the container, and points the service at `port`. The interface is only reachable over the container network, so no host port is published for it.
+
+The following variables control the Traefik labels:
+
+- `minecraft_container_labels_traefik_enabled` — whether to attach the labels at all. Defaults to `false`.
+- `minecraft_container_labels_traefik_docker_network` — the network to put in the `traefik.docker.network` label. Defaults to `minecraft_container_network`.
+- `minecraft_container_labels_traefik_entrypoints` — the Traefik entrypoint(s) to attach the routers to. Defaults to `web-secure`.
+- `minecraft_container_labels_traefik_tls` — whether the routers use TLS. Defaults to `true`.
+- `minecraft_container_labels_traefik_tls_certResolver` — the certificate resolver for the routers. Defaults to `default`.
+
+When using the [MASH playbook](https://github.com/mother-of-all-self-hosting/mash-playbook), the container is attached to the Traefik network automatically when `minecraft_web_interfaces` is not empty, and the entrypoint and certificate resolver are already set. You only need to set `minecraft_web_interfaces` and configure the plugins.
+
+Make sure the plugin's web server listens on all interfaces inside the container (`0.0.0.0`), rather than only on `127.0.0.1`, otherwise Traefik cannot reach it. Check the plugin's own configuration for its bind address; both BlueMap and Dynmap listen on all interfaces by default.
+
+> [!NOTE]
+> These labels are only for the web interfaces listed in `minecraft_web_interfaces`. Use `minecraft_container_labels_additional_labels` for any labels of your own; they are appended to the generated ones.
+
 ### Example configurations
 
 Here is an example set of configurations for running a Minecraft Server instance with:
