@@ -7,4 +7,21 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 
 {# TODO: mc-router auto-discovery labels #}
 
+{% if minecraft_container_labels_traefik_enabled and minecraft_web_interfaces | length > 0 %}
+traefik.enable=true
+{% if minecraft_container_labels_traefik_docker_network %}
+traefik.docker.network={{ minecraft_container_labels_traefik_docker_network }}
+{% endif %}
+{% for interface in minecraft_web_interfaces %}
+traefik.http.routers.{{ minecraft_identifier }}-{{ interface.name }}.rule=Host(`{{ interface.hostname }}`)
+traefik.http.routers.{{ minecraft_identifier }}-{{ interface.name }}.service={{ minecraft_identifier }}-{{ interface.name }}
+traefik.http.routers.{{ minecraft_identifier }}-{{ interface.name }}.entrypoints={{ minecraft_container_labels_traefik_entrypoints }}
+traefik.http.routers.{{ minecraft_identifier }}-{{ interface.name }}.tls={{ minecraft_container_labels_traefik_tls | to_json }}
+{% if minecraft_container_labels_traefik_tls and minecraft_container_labels_traefik_tls_certResolver %}
+traefik.http.routers.{{ minecraft_identifier }}-{{ interface.name }}.tls.certResolver={{ minecraft_container_labels_traefik_tls_certResolver }}
+{% endif %}
+traefik.http.services.{{ minecraft_identifier }}-{{ interface.name }}.loadbalancer.server.port={{ interface.port }}
+{% endfor %}
+{% endif %}
+
 {{ minecraft_container_labels_additional_labels }}

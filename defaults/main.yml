@@ -59,6 +59,22 @@ minecraft_container_additional_networks: "{{ minecraft_container_additional_netw
 minecraft_container_additional_networks_auto: []
 minecraft_container_additional_networks_custom: []
 
+# A list of web interfaces exposed by plugins running inside the container
+# (BlueMap, Dynmap, ...). Each entry gets a Traefik router which points at the
+# container on `port`.
+#
+# Each entry needs:
+# - `name`: a unique name, used to build the Traefik router and service names
+# - `hostname`: the hostname at which the interface is served
+# - `port`: the port the plugin's web server listens on inside the container
+#
+# Example:
+# minecraft_web_interfaces:
+#   - name: bluemap
+#     hostname: bluemap.example.com
+#     port: 8100
+minecraft_web_interfaces: []
+
 # A list of additional "volumes" to mount in the container.
 # This list gets populated dynamically at runtime. You can provide a different default value,
 # if you wish to mount your own files into the container.
@@ -78,6 +94,17 @@ minecraft_container_additional_volumes_custom: []
 #
 # TODO: Add labels for mc-router auto-discovery
 minecraft_container_labels_additional_labels: ""
+
+# minecraft_container_labels_traefik_enabled controls whether labels to assist a
+# Traefik reverse-proxy are attached to the container.
+# See `../templates/labels.j2` for details.
+#
+# A router is only rendered for each entry in `minecraft_web_interfaces`.
+minecraft_container_labels_traefik_enabled: false
+minecraft_container_labels_traefik_docker_network: "{{ minecraft_container_network }}"
+minecraft_container_labels_traefik_entrypoints: web-secure
+minecraft_container_labels_traefik_tls: true
+minecraft_container_labels_traefik_tls_certResolver: default  # noqa var-naming
 
 # A list of extra arguments to pass to the container (`docker create` command)
 minecraft_container_extra_arguments: "{{ minecraft_container_extra_arguments_auto + minecraft_container_extra_arguments_custom }}"

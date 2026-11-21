@@ -64,6 +64,20 @@ provisioner:
         minecraft_environment_variables_additional_variables: |
           MOTD={{ minecraft_molecule_motd }}
           MAX_PLAYERS={{ minecraft_molecule_max_players }}
+
+        # Exercised by the labels-rendering assertions in verify.yml. The
+        # container is not attached to a `traefik` network, but the value of
+        # `traefik.docker.network` is only a label and has no runtime effect.
+        minecraft_container_labels_traefik_enabled: true
+        minecraft_container_labels_traefik_docker_network: traefik
+        minecraft_container_labels_traefik_entrypoints: web-secure
+        minecraft_container_labels_traefik_tls_certResolver: default
+        minecraft_web_interfaces:
+          - name: bluemap
+            hostname: bluemap.example.com
+            port: 8100
+        minecraft_container_labels_additional_labels: |
+          molecule.test/label=present
   env:
     # Workaround for https://github.com/ansible/molecule/issues/4391
     ANSIBLE_ROLES_PATH: ${MOLECULE_PROJECT_DIRECTORY}/..:/.ansible/roles:/usr/share/ansible/roles:/etc/ansible/roles:~/.ansible/roles
